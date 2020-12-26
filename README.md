@@ -1,2 +1,3 @@
 # piro
-Pd-port of the HISSTools Impulse Response Toolbox (HIRT)
+Pd-port of irmeasure~ and multiconvolve~ from the HISSTools Impulse Response Toolbox (HIRT)
+
