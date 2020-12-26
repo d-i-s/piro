@@ -7,5 +7,5 @@ Please consider this version as an alpha version. For any question please contac
 
 Thanks to Giuseppe Silvi and Lucas Cordiviola.
 
-For Max/MSP version please look at Alex Harker and Pierre Alexandre Tremblay work.
+For Max/MSP version please look at Alex Harker and Pierre Alexandre Tremblay work: https://github.com/HISSTools/HISSTools_Impulse_Response_Toolbox .
 
