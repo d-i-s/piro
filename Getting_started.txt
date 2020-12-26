@@ -1,0 +1,29 @@
+piro -- getting started
+
+
+piro library consists acutally in two objects, [irmeasure~] and
+[multiconvolve~]. [irmeasure~] is an object for creation of impulse
+responses, [multiconvolve~] a real-time zero latency
+convolver.
+
+compiling piro:
+
+piro includes binaries for osx32/64 bit, linux 64 bit, w32/64 and osx 64
+bit double precision. otherwise it provides pd-lib-builder to compile it by yourself.
+piro has been tested for vanilla (version number 0.50-2)
+and purr-data single bit precision. if you have any questions do not
+hesitate to contact me:
+mm dot markidis at gmail dot com
+
+testing piro:
+
+for [irmeasure~], open irmeasure~-help.pd, turn on dsp, click |sweep< method. you
+should see the progress outlet go from 0 to 1 and when done you should
+get a bang on the right outlet. at this point, click |getir< method,
+that writes the impulse response by default on ir1 table. then, open
+[pd soundfiler-write] and write ir1 table where you prefer. check your
+impulse response with sw-ir.wav: you should obtain the same impulse
+response. you can repeat the same procedure for mls method.
+
+for [multiconvolve~], open multiconvolve~-help.pd, load impulse
+responses using set method, turn on dsp, and play a soundfile.
