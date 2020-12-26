@@ -1,0 +1,88 @@
+#N canvas 407 39 809 346 10;
+#N canvas 0 23 497 404 table 0;
+#N canvas 0 23 450 278 (subpatch) 0;
+#X array ir1 132300 float 2;
+#X coords 0 1 132300 -1 200 140 1 0 0;
+#X restore 25 42 graph;
+#N canvas 0 23 450 278 (subpatch) 0;
+#X array ir2 132300 float 2;
+#X coords 0 1 132300 -1 200 140 1 0 0;
+#X restore 237 44 graph;
+#N canvas 0 23 450 278 (subpatch) 0;
+#X array ir3 132300 float 2;
+#X coords 0 1 132300 -1 200 140 1 0 0;
+#X restore 25 212 graph;
+#N canvas 0 23 450 278 (subpatch) 0;
+#X array ir4 132300 float 2;
+#X coords 0 1 132300 -1 200 140 1 0 0;
+#X restore 236 212 graph;
+#X restore 665 263 pd table;
+#N canvas 625 283 450 300 help 0;
+#X text 29 19 Either functions to allow realtime convolution of multiple
+parallel mono channels \, or as a convolution matrix \, where each
+input-output path can have an individual IR \, set from buffers.;
+#X restore 678 21 pd help;
+#N canvas 155 202 518 361 soundfiler-read 0;
+#X obj 39 267 soundfiler;
+#X floatatom 39 288 7 0 0 0 - - -;
+#X obj 40 15 loadbang;
+#X msg 39 73 read -resize ./snd/ir_stpauls_1-1.wav ir1;
+#X msg 49 133 read -resize ./snd/ir_stpauls_1-2.wav ir2;
+#X msg 58 176 read -resize ./snd/ir_stpauls_2-1.wav ir3;
+#X msg 77 219 read -resize ./snd/ir_stpauls_2-2.wav ir4;
+#X connect 0 0 1 0;
+#X connect 2 0 3 0;
+#X connect 2 0 4 0;
+#X connect 2 0 5 0;
+#X connect 2 0 6 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
+#X connect 6 0 0 0;
+#X restore 665 283 pd soundfiler-read;
+#X text 32 27 multiconvolve~: multichannel realtime zero- or low- latency
+convolution;
+#X text 230 130 Arguments: [no. input = 1] / [no. output for non-parallel
+operations] / [latency mode = zero];
+#X text 231 163 If num of outputs is not specified it will be equal
+to the number of inputs. This invokes "parallel" mode \, where channels
+work independently in parallel only (input 1 outputs to output 1 and
+so on). Otherwise \, the object invokes a matrix of convolvers (one
+for each input-output combination) that can be set independently.;
+#X text 232 233 Latency mode may be one of the following:;
+#N canvas 529 34 450 178 fixedsize 0;
+#X text 51 24 fixedsize -- fixed impulse length (samples);
+#X text 51 52 Set in integer values. this sets the memory allocation
+for all convolvers to a fixed size (in samples). When zero (default)
+\, memory allocation is dynamic. adapting to the size of the loaded
+IRs. If the fixed size changes \, all IRs are cleared. This should
+be used in cases where memory allocation must be tightly controlled
+\, or dynamic memory allocation is not viable.;
+#X restore 678 61 pd fixedsize;
+#X msg 45 92 start;
+#X msg 60 115 stop;
+#X msg 237 73 set 1 1 ir1 \, set 1 2 ir2 \, set 2 1 ir3 \, set 2 2
+ir4;
+#X obj 29 204 multiconvolve~ 2 2 zero;
+#X text 231 248 zero -- zero-latency convolution - 0 samples delay
+(least efficient);
+#X text 231 274 short -- short delay - 128 samples (more efficient)
+;
+#X text 232 293 medium -- medium delay - 512 samples (most efficient)
+;
+#X msg 242 102 clear;
+#X text 296 98 set - load IR to convolver - [input chan = 1] / [output
+chan = 1] / buffer;
+#X text 235 322 clear - clear all loaded IRs;
+#X msg 29 68 open ./snd/voice.wav;
+#X obj 29 282 dac~ 1 2;
+#X obj 29 147 readsf~ 1;
+#X connect 8 0 20 0;
+#X connect 9 0 20 0;
+#X connect 10 0 11 0;
+#X connect 11 0 19 0;
+#X connect 11 1 19 1;
+#X connect 15 0 11 0;
+#X connect 18 0 20 0;
+#X connect 20 0 11 0;
+#X connect 20 0 11 1;
