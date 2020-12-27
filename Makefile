@@ -39,7 +39,7 @@ datafiles = irmeasure~-help.pd multiconvolve~-help.pd irmanip-help.pd
 
 # extra dirs
 datadirs = snd \
-reference-signal
+
 
 cflags += -fno-finite-math-only
 
