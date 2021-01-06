@@ -13,7 +13,6 @@ common.sources := \
 ./lib/z_fft.c
 
 hirmeasure~ := \
-./lib/z_matrix_math.c \
 ./lib/z_utils.c \
 ./lib/z_core.c 
 
