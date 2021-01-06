@@ -13,7 +13,7 @@ common.sources := \
 ./lib/z_fft.c
 
 hirmeasure~ := \
-# ./lib/z_matrix_math.c \
+./lib/z_matrix_math.c \
 ./lib/z_utils.c \
 ./lib/z_core.c 
 
@@ -36,6 +36,10 @@ irmanip.class.sources := irmanip.c $(hirmanip)
 
 # all extra files to be included in binary distribution of the library
 datafiles = irmeasure~-help.pd multiconvolve~-help.pd irmanip-help.pd
+
+# extra dirs
+datadirs = snd \
+
 
 cflags += -fno-finite-math-only
 
