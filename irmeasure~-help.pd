@@ -221,11 +221,12 @@ using different convolution settings. dsp must be on.;
 #X obj 454 586 s toirmeasure;
 #X floatatom 511 543 5 0 0 0 - - -;
 #X msg 511 563 fullscale \$1;
-#N canvas 498 75 450 231 fullscale 0;
+#N canvas 498 75 450 231 fullscale 1;
 #X text 51 24 fullscale -- amplitude of the outcoming signal;
 #X text 51 52 It is possible to set the amplitude of the outcoming
-signal. By default it is set to 0 dB \; however it possible to set
-it to a chosen value in the limit [-100 \, 385] dB.;
+signal. By default it is set to 0 dB (while in HIRT version it is -1
+dB) \; however it possible to set it to a chosen value in the limit
+[-100 \, 385] dB.;
 #X restore 678 171 pd fullscale;
 #X msg 45 29 sweep 20 22050 30000 50 10 5000;
 #X text 88 584 read [pd help] to replace this simple loop mechanics
