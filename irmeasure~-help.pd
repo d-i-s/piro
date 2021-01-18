@@ -153,12 +153,17 @@ between 0 and 1 (where 0 is minimum phase \, 0.5 is linear phase and
 #X obj 454 365 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X msg 454 384 bandlimit \$1;
-#N canvas 523 194 518 361 soundfiler-write 0;
+#N canvas 629 192 518 361 soundfiler-write 1;
 #X obj 39 44 soundfiler;
 #X floatatom 39 65 7 0 0 0 - - -;
 #X msg 39 24 write -wave -bytes 3 ./snd/your-IR.wav ir-table;
+#X obj 39 114 soundfiler;
+#X floatatom 39 135 7 0 0 0 - - -;
+#X msg 39 94 write -wave -bytes 3 ./snd/your-sig.wav sig-table;
 #X connect 0 0 1 0;
 #X connect 2 0 0 0;
+#X connect 3 0 4 0;
+#X connect 5 0 3 0;
 #X restore 678 289 pd soundfiler-write;
 #N canvas 155 202 518 361 soundfiler-read 0;
 #X obj 39 67 soundfiler;
@@ -221,14 +226,13 @@ using different convolution settings. dsp must be on.;
 #X obj 454 586 s toirmeasure;
 #X floatatom 511 543 5 0 0 0 - - -;
 #X msg 511 563 fullscale \$1;
-#N canvas 498 75 450 231 fullscale 1;
+#N canvas 498 75 450 231 fullscale 0;
 #X text 51 24 fullscale -- amplitude of the outcoming signal;
 #X text 51 52 It is possible to set the amplitude of the outcoming
 signal. By default it is set to 0 dB (while in HIRT version it is -1
 dB) \; however it possible to set it to a chosen value in the limit
 [-100 \, 385] dB.;
 #X restore 678 171 pd fullscale;
-#X msg 45 29 sweep 20 22050 30000 50 10 5000;
 #X text 88 584 read [pd help] to replace this simple loop mechanics
 ;
 #X text 85 9 read [pd help] to replace this simple loop mechanics;
@@ -240,6 +244,7 @@ buffer: buffer name [no. in chan = 1 \, out chan = 1 \, harmonic =
 1];
 #X text 281 314 save to a buffer the incoming signal resizing appropriately
 the buffer: no. in chan = 1 \, buffer name;
+#X msg 45 29 sweep 20 22050 5000 50 10 1000;
 #X connect 0 0 48 0;
 #X connect 1 0 48 0;
 #X connect 2 0 3 0;
@@ -269,7 +274,7 @@ the buffer: no. in chan = 1 \, buffer name;
 #X connect 49 0 48 0;
 #X connect 51 0 52 0;
 #X connect 52 0 50 0;
-#X connect 54 0 48 0;
-#X connect 57 0 50 0;
+#X connect 56 0 50 0;
+#X connect 57 0 48 0;
 #X connect 58 0 48 0;
-#X connect 59 0 48 0;
+#X connect 61 0 48 0;
