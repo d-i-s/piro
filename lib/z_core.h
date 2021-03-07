@@ -11,7 +11,7 @@
 #define HUGE_VAL 1e+39
 #endif
 
-t_float hann_table[4097];
+static t_float hann_table[4097];
 static long hann_setup_flag = 0;
 
 typedef enum {
