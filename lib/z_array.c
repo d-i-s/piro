@@ -38,6 +38,7 @@ int attach_array(t_symbol *x_name, t_garray **x_buf, t_word **x_samples,
   }
   
   if(!(a = (t_garray *)pd_findbyclass(name, garray_class))) {
+    x_samples = 0;
     if(name->s_name) {
       post("%s: no such array", name->s_name);
       return err;
@@ -45,6 +46,7 @@ int attach_array(t_symbol *x_name, t_garray **x_buf, t_word **x_samples,
   }
 
   if(!garray_getfloatwords(a, &frames, &samples)) {
+    x_samples = 0;
     post("bad array for %s", name->s_name);
     return err;
   }
@@ -188,30 +190,49 @@ int buffer_write(t_symbol *s, t_sample *in, t_int write_length, t_int resize,
   int err = 0;
 
   buf_name = s;
-
+  
   err = attach_array(buf_name, &buf, &buf_samples, &buf_frames);
-
+  
   if(!err)
-    return err;
+    {
+      post("error in writing buffer");
+      return err;
+    }
   
   if(resize) {
     garray_resize_long(buf, write_length);
     err = attach_array(buf_name, &buf, &buf_samples, &buf_frames); 
-    if(!err)
+  if(!err)
+    {
+      post("error in writing buffer");
       return err;
+    }
   }
-
+  
   for(i=0; i<write_length; i++)
-    buf_samples[i].w_float = (t_float)(in[i] * mul);
+    {
+      t_sample f = (t_float)(in[i] * mul);//*in++ * mul;
+      if(PD_BIGORSMALL(f))
+	f = 0;
+      buf_samples[i].w_float = f;
+      //(buf_samples)->w_float = f; // attento, ++
+    
+    }
+  //buf_samples[i].w_float = (t_float)(in[i] * mul);
+  // (buf_samples++)->w_float = (t_float)(*in++ * mul);
 
+  if(!buf_samples) post("error in writing buffer");
+
+  //buf_samples = vec;
+  
   if(resize==0) {
     for(;i<buf_frames;i++) {
       buf_samples[i].w_float = 0.;
+      //(buf_samples++)->w_float = 0.;
     }
   }
 
   garray_redraw(buf);
-
   
   return 1;
 }

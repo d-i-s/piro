@@ -1,10 +1,11 @@
 #ifndef __M_TYPES__
 #define __M_TYPES__
 
-
 #include "m_pd.h"
-
 #include <math.h> /* sin, cos, M_PI, ... */
+
+#define DEBUG32BIT (1) /* questo definisce il debug per i 32 bit */
+#define DEBUG32BIT2 (1)
 
 /* PD_FLOATSIZE = 32 definisce t_sample float o double */
 /* PD_LONGINTTYPE long o long long --> t_int */
@@ -20,7 +21,7 @@ typedef unsigned long long t_uint;
 #elif PD_FLOATSIZE == 32
 typedef unsigned long t_uint;
 #define PD_SAMPLE_PRECISION
-#endif /* PD_SAMPLE_PRECISION */
+#endif /* PD_FLOATSIZE */
 
 
 #define SQRT_2_2 0.70710678118654752440084436210484904
@@ -64,12 +65,14 @@ typedef struct _FFT_Split32
 
 typedef struct _FFT_Setup32
 {
-  t_int max_fft_log2;
+  t_int max_fft_log2; // t_uint
   FFT_Split32 tables[28];
 } FFT_Setup32;
 
 
 /* SIMD support */
+
+#define ENABLE_SIMD_SUPPORT (0)
 
 #include <emmintrin.h>
 typedef __m128  vFloat;

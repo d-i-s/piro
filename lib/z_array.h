@@ -3,7 +3,6 @@
 
 #include "m_pd.h"
 
-
 int buffer_check(t_symbol *name);
 int attach_array(t_symbol *x_name, t_garray **x_buf, t_word **x_samples,
 		 int *x_frames);

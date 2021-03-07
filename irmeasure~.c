@@ -100,7 +100,7 @@ typedef struct _irmeasure_tilde {
   long resize;
   long write_chan;
   
-  t_outlet *bangout;
+  t_outlet *bangout; // free
   
 } t_irmeasure_tilde;
 
@@ -311,12 +311,12 @@ t_uint ess_params(t_ess *x, double f1, double f2, double fade_in,
   x->fade_out = fade_out;
   x->sample_rate = sample_rate;
   x->amp = amp;
-
-  for(i=0; amp_curve && (i < 32); i++) {
-    if(isinf(amp_curve[i]) || amp_curve==NULL) /* isinf used */
+  
+  for(i=0; amp_curve && (i < 32); i++) { /* isinf fix */
+    if(isinf(amp_curve[i]) || amp_curve==NULL || amp_curve[i] == HUGE_VAL) 
       break;
   }
-    
+  
   if(i!=0) {
     num_items = i >> 1;
   }
@@ -329,7 +329,7 @@ t_uint ess_params(t_ess *x, double f1, double f2, double fade_in,
     x->amp_specifier[2*i + 3] = last_db_val = amp_curve[2*i + 1];
   }
 
-  x->amp_specifier[2*num_items + 2] = HUGE_VAL; /* */
+  x->amp_specifier[2*num_items + 2] = HUGE_VAL;
   x->amp_specifier[2*num_items + 3] = last_db_val;
 
   x->num_amp_specifiers = num_items;
@@ -863,10 +863,8 @@ static void irmeasure_tilde_extract(t_irmeasure_tilde *x, t_symbol *sym, int arg
   t_int rec_length = x->T2;
 
   t_uint fft_size = x->fft_size;
-  /* t_ulong mem_size; */
 
   rec_mem = x->rec_mem;
-  /* mem_size = x->rec_mem_size; */
 
   /* Get arguments */
 
@@ -895,7 +893,6 @@ static void irmeasure_tilde_extract(t_irmeasure_tilde *x, t_symbol *sym, int arg
   }
 
   /* Write to buffer */
-
   buffer_write(buffer, rec_mem + rec_length * in_chan, rec_length, x->resize, 1.0);
 
 }
@@ -994,7 +991,7 @@ static void irmeasure_tilde_getir(t_irmeasure_tilde *x, t_symbol *sym, int argc,
     T += fft_size;
 
   out_buf = out_mem + (in_chan * fft_size) + T;
-
+  
   err = buffer_write(buffer, out_buf, write_length, x->resize, 1.);
   
   if(!err)
@@ -1188,7 +1185,7 @@ static void irmeasure_tilde_sweep(t_irmeasure_tilde *x, t_symbol *sym, long argc
   x->out_length = out_length / 1000.;
   
   if(ess_params(&sweep_params, x->lo_f, x->hi_f, x->fade_in, x->fade_out,
-		x->length, x->sample_rate, db_to_a(x->amp), NULL)) {
+		x->length, x->sample_rate, db_to_a(x->amp), NULL)) { /* NULL */
     mem_size = num_active_ins * irmeasure_calc_sweep_mem_size(&sweep_params,
 							      num_active_outs,
 							      x->out_length,
@@ -1303,8 +1300,7 @@ static void irmeasure_process(t_irmeasure_tilde *x)
 
   attach_array(filter, &a, &a_filter, &filter_length);
   filter_in = filter_length ? (t_float *)aligned_getbytes(fft_size *
-							  sizeof(t_float)) :
-    NULL;
+							  sizeof(t_float)) : NULL;
   
   if(!fft_setup || !excitation_sig || !spectrum_1.realp || (filter_length &&
 							    !filter_in)) {
@@ -1347,10 +1343,10 @@ static void irmeasure_process(t_irmeasure_tilde *x)
       coloured_noise_gen(&noise_params, excitation_sig);
       break;
     }
-
+  
   time_to_halfspectrum(fft_setup, excitation_sig, gen_length, spectrum_2,
 		       fft_size);
-
+  
   if(bandlimit) {
     ess_igen(&sweep_params, excitation_sig, true);
     
@@ -1373,27 +1369,29 @@ static void irmeasure_process(t_irmeasure_tilde *x)
     max_pow = pow_to_db(max_pow);
     
     fill_power_array_specifier(filter_specifier, x->deconvolve_filter_specifier,
-  			       x->deconvolve_num_filter_specifiers);
+  			       x->deconvolve_num_filter_specifiers);    
     fill_power_array_specifier(range_specifier, x->deconvolve_range_specifier,
-  			       x->deconvolve_num_range_specifiers);
+  			       x->deconvolve_num_range_specifiers);    
     buffer_read(filter, filter_in, fft_size);
     make_deconvolution_filter(fft_setup, spectrum_2, spectrum_3,
     			      filter_specifier, range_specifier, max_pow,
     			      filter_in, fft_size, fft_size,
     			      SPECTRUM_REAL, deconvolve_mode, deconvolve_phase,
-    			      sample_rate);
+    			      sample_rate);   
   }
 
   for(i=0; i<(t_uint)x->current_num_active_ins; i++) {
     measurement_rec = (t_sample *)rec_mem + (i * rec_length);
-    out_buf = out_mem + (i * fft_size);
-
+    out_buf = out_mem + (i * fft_size); 
+    
     time_to_halfspectrum(fft_setup, measurement_rec, rec_length, spectrum_1,
 			 fft_size);
+    
     deconvolve_with_filter(spectrum_1, spectrum_2, spectrum_3, fft_size,
     			   SPECTRUM_REAL);
-    spectrum_to_time(fft_setup, out_buf, spectrum_1, fft_size, SPECTRUM_REAL);
-
+    
+    spectrum_to_time(fft_setup, out_buf, spectrum_1, fft_size, SPECTRUM_REAL); 
+    
   }
 
   destroy_setup(fft_setup);
@@ -1773,6 +1771,8 @@ static void irmeasure_tilde_free(t_irmeasure_tilde *x)
 	    PIRO_MAX_SPECIFIER_ITEMS*sizeof(t_atom));
   aligned_freebytes(x->deconvolve_range_specifier,
 	    PIRO_MAX_SPECIFIER_ITEMS*sizeof(t_atom));
+
+  outlet_free(x->bangout);
 }
 
 static void *irmeasure_tilde_new(t_symbol *s, short argc, t_atom *argv)
@@ -1849,6 +1849,7 @@ static void *irmeasure_tilde_new(t_symbol *s, short argc, t_atom *argv)
   x->measure_mode = SWEEP; /* default configuration */
   x->phase = 0.;
 
+  /* questa memoria va liberata */
   for(i=1;i<x->num_in_chans;i++)
     inlet_new(&x->x_obj,&x->x_obj.ob_pd,&s_signal,&s_signal);
   

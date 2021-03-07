@@ -8,10 +8,10 @@
 
 #if !defined(HUGE_VAL)
 #error HUGE_VAL not defined
-#define HUGE_VAL 1e+39
+#define HUGE_VAL 7FFFFFFF /* ridefiniamo questo valore per i 32 bit? */
 #endif
 
-static t_float hann_table[4097];
+static t_float hann_table[4097]; /* thanks to LC */
 static long hann_setup_flag = 0;
 
 typedef enum {

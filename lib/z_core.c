@@ -815,6 +815,7 @@ void spectrum_to_time(FFT_Setup *fft_setup, t_sample *out_buf, FFT_Split spectru
   t_uint i = 0;
 
   double scale = 1. / (double)fft_size;
+  //t_sample scale = 1. / (t_sample)fft_size; // testing
 
   if(inexact)
     return;
@@ -824,8 +825,11 @@ void spectrum_to_time(FFT_Setup *fft_setup, t_sample *out_buf, FFT_Split spectru
   }
 
   do_real_ifft(&spectrum, fft_setup, fft_size_log2);
+  
   zip_sample(&spectrum, out_buf, (t_uint) 1 << (fft_size_log2 - (t_uint) 1));
-
+    
+  // zip_sample riarrangia solo i campioni
+  
   for(i=0; i<fft_size; i++)
     out_buf[i] *= scale;
 }

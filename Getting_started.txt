@@ -1,15 +1,16 @@
 piro -- getting started
 
 
-piro library consists actually in two objects, [irmeasure~] and
+piro library consists acutally in two objects, [irmeasure~] and
 [multiconvolve~]. [irmeasure~] is an object for creation of impulse
 responses, [multiconvolve~] a real-time zero latency
 convolver.
 
 compiling piro:
 
-piro includes binaries for osx32/64 bit, linux 64 bit, w32/64. moreover it provides pd-lib-builder to compile it by yourself.
-piro has been tested for vanilla (version number 0.51-3)
+piro includes binaries for osx32/64 bit, linux 64 bit, w32/64 and osx 64
+bit double precision. otherwise it provides pd-lib-builder to compile it by yourself.
+piro has been tested for vanilla (version number 0.50-2)
 and purr-data single bit precision. if you have any questions do not
 hesitate to contact me:
 mm dot markidis at gmail dot com

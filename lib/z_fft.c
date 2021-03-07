@@ -552,14 +552,12 @@ void pass_trig_table_reorder_simd(FFT_Split *input, FFT_Setup *setup, t_uint len
 
 void pass_trig_table_simd(FFT_Split *input, FFT_Setup *setup, t_uint length, t_uint pass)
 {
-
-  /* post("vFloat"); */
   
   t_uint size = 2 << pass;
   t_uint incr = size >> 3;
   t_uint loop = size;
   t_uint i;
-	
+  
   vFloat r1, r2, r3, i1, i2, i3;
   vFloat twiddle_c, twiddle_s;
 	
@@ -595,7 +593,7 @@ void pass_trig_table_simd(FFT_Split *input, FFT_Setup *setup, t_uint length, t_u
 			      F32_VEC_MUL_OP(i2, twiddle_c));
 			
 	  // Store output (same pos as inputs)
-			
+	  
 	  *r1_ptr++ = F32_VEC_ADD_OP(r1, r3);
 	  *i1_ptr++ = F32_VEC_ADD_OP(i1, i3);
 			
@@ -608,9 +606,10 @@ void pass_trig_table_simd(FFT_Split *input, FFT_Setup *setup, t_uint length, t_u
       i1_ptr += incr;
       i2_ptr += incr;
     }
+  
 }
 #else
-
+// qui t_sample == double
 void pass_1_2_reorder_simd(FFT_Split *input, t_uint length)
 {
   t_uint i;
@@ -1589,7 +1588,7 @@ void pass_real_trig_table(FFT_Split *input, FFT_Setup *setup, t_uint fft_log2, l
 
   *r1_ptr++ = t1;
   *i1_ptr++ = t2;
-
+  
   for(i=0; i < (length >> 1); i++) {
     twiddle_c1 = flip * *tr1_ptr++;
     twiddle_s1 = *ti1_ptr++;
@@ -1605,7 +1604,7 @@ void pass_real_trig_table(FFT_Split *input, FFT_Setup *setup, t_uint fft_log2, l
     i4 = i1 - i2;
 
     t1 = (twiddle_c1 * i3) + (twiddle_s1 * r4);
-    t2 = (twiddle_c1 * -r4) + (twiddle_s1 * i3);
+    t2 = (twiddle_c1 * - r4) + (twiddle_s1 * i3);
 
     *r1_ptr++ = r3 + t1;
     *i1_ptr++ = t2 + i4;
@@ -1686,10 +1685,10 @@ void pass_trig_table(FFT_Split *input, FFT_Setup *setup, t_uint length, t_uint p
   double r1, r2, i1, i2, r_0, i_0;
   double twiddle_c, twiddle_s;
 
-  t_sample *r1_ptr = (t_sample *)input->realp;
-  t_sample *i1_ptr = (t_sample *)input->imagp;
-  t_sample *r2_ptr = (t_sample *)r1_ptr + incr;
-  t_sample *i2_ptr = (t_sample *)i1_ptr + incr;
+  t_sample *r1_ptr = input->realp; // (t_sample *)
+  t_sample *i1_ptr = input->imagp;
+  t_sample *r2_ptr = r1_ptr + incr;
+  t_sample *i2_ptr = i1_ptr + incr;
 
   for(i = 0; i < length; loop += size) {
     t_sample *tr_ptr = setup->tables[pass - PASS_TRIG_OFFSET].realp;
@@ -1719,6 +1718,7 @@ void pass_trig_table(FFT_Split *input, FFT_Setup *setup, t_uint length, t_uint p
     i1_ptr += incr;
     i2_ptr += incr;
   }
+  
 }
 
 void pass_trig_table_reorder(FFT_Split *input, FFT_Setup *setup, t_uint length, t_uint pass)
@@ -2372,41 +2372,42 @@ void fft_internal(FFT_Split *input, FFT_Setup *setup, t_uint fft_log2)
     do_small_fft(input, fft_log2);
     return;
   }
-#ifdef VECTOR_F64_128BIT
+#if defined VECTOR_F64_128BIT && (ENABLE_SIMD_SUPPORT == 1)
   if((t_uint_fft) input->realp % 16 || (t_uint_fft) input->imagp % 16 || !SSE_Exists)
 #endif
     {
-  
+      
       pass_1_2_reorder(input, length, fft_log2);
-
-      if(fft_log2 > 5) 
+      
+      if(fft_log2 > 5)
       	pass_3_reorder(input, length, fft_log2);
       else
-      	pass_3(input, length, fft_log2);
+      	pass_3(input, length, fft_log2);     
   
       for(i=3; i < (fft_log2 >> 1); i++)
-      	pass_trig_table_reorder(input, setup, length, i);
+      	pass_trig_table_reorder(input, setup, length, i);      
       
       for(; i < fft_log2; i++)
       	pass_trig_table(input, setup, length, i);
+      
     }
-#ifdef VECTOR_F64_128BIT
-  else
+#if defined VECTOR_F64_128BIT && (ENABLE_SIMD_SUPPORT == 1)
+  else /* from here: simd fft */
     {
       
-      
       pass_1_2_reorder_simd(input, length);
-
+      
       if(fft_log2 > 5)
 	pass_3_reorder_simd(input, length);
       else
-	pass_3(input, length, fft_log2);
+	pass_3(input, length, fft_log2);     
 
       for(i=3; i<(fft_log2 >> 1); i++)
-	pass_trig_table_reorder_simd(input, setup, length, i);
+	pass_trig_table_reorder_simd(input, setup, length, i);     
 
       for(; i<fft_log2;i++)
 	pass_trig_table_simd(input, setup, length, i);
+      
     }
 #endif
 }
@@ -2482,6 +2483,7 @@ void do_real_ifft(FFT_Split *input, FFT_Setup *setup, t_uint fft_log2)
   }
 
   pass_real_trig_table(input, setup, fft_log2, 1L);
+  
   do_ifft(input, setup, fft_log2 - 1);
 }
 

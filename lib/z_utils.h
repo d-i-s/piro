@@ -1,7 +1,7 @@
 #ifndef __ZUTILS__
 #define __ZUTILS__
 
-#include "m_pd.h"
+//#include "m_pd.h"
 #include "z_fft.h"
 
 t_float delay_retriever(t_atom *delay, t_uint fft_size, t_float sample_rate);

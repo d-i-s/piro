@@ -1,13 +1,13 @@
 #ifndef __IRMEASURE__
 #define __IRMEASURE__
 
-#include "m_pd.h"
-#include <math.h> /* serve? */
+//#include "m_pd.h" // gia' incluso in z_core --> z_fft
+//#include <math.h> /* gia' incluso in z_core --> z_fft */
 #include <stdio.h> /* serve? */
 #include <stdlib.h> /* serve? */
 
 #include "./lib/z_array.h"
-#include "./lib/z_fft.h"
+//#include "./lib/z_fft.h"
 #include "./lib/z_core.h"
 #include "./lib/z_utils.h"
 

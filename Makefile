@@ -36,13 +36,9 @@ irmanip.class.sources := irmanip.c $(hirmanip)
 # all extra files to be included in binary distribution of the library
 datafiles = irmeasure~-help.pd multiconvolve~-help.pd irmanip-help.pd
 
-# extra dirs
-datadirs = snd \
+cflags += -g
 
-
-cflags += -fno-finite-math-only
-
-ldflags +=
+ldflags += -g
 
 suppress-wunused += -Wunused-variable
 
