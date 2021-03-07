@@ -1,0 +1,10 @@
+piro -- reference signal
+
+
+the following IRs have been obtained using
+
+- mls 21 5000;
+- sweep 20 22050 30000 50 10 5000 ,
+
+for osx & osx floatsize double precision, linux 64 & 32 bit, windows
+64 & 32 bit.
