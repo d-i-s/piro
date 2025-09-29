@@ -953,12 +953,12 @@ static void irmeasure_tilde_getir(t_irmeasure_tilde *x, t_symbol *sym, int argc,
   }
 
   if(harmonic != 1 && x->measure_mode != SWEEP) {
-    verbose(2, "harmonics only available using sweep measurement");
+    logpost(x, 2, "harmonics only available using sweep measurement");
     harmonic = 1;
   }
 
   if(harmonic < 1) {
-    verbose(2, "harmonic must be an integer of one or greater");
+    logpost(x, 2, "harmonic must be an integer of one or greater");
     harmonic = 1;
   }
   

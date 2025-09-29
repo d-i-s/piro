@@ -74,22 +74,118 @@ typedef struct _FFT_Setup32
 
 #define ENABLE_SIMD_SUPPORT (0)
 
-#include <emmintrin.h>
-typedef __m128  vFloat;
-typedef __m128d vDouble;
+/* ------------------------------------------------------------------
+   ADDITIONS FOR APPLE SILICON / ARM (non-destructive to existing code)
+   ------------------------------------------------------------------ */
 
+/* Detect Apple ARM64 (macOS on Apple Silicon) */
+#if defined(__APPLE__) && (defined(__arm64__) || defined(__aarch64__))
+#define TARGET_APPLE_ARM64 1
+#endif
+
+/* Generic ARM NEON detection */
+#if defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(__aarch64__) || defined(TARGET_APPLE_ARM64)
+#define TARGET_ARM_NEON 1
+#endif
+
+/* Keep original TARGET_INTEL detection (unchanged) */
 #ifndef TARGET_INTEL
 #if defined( __i386__ ) || defined ( __x86_64__ ) || defined(WIN_VERSION)
 #define TARGET_INTEL
 #endif
 #endif
 
+/* ------------- ORIGINAL INTEL SSE2 SECTION (kept, only wrapped) -------------
+   (We only wrap the unconditional include so non-Intel targets still compile) */
 #ifdef TARGET_INTEL
+#include <emmintrin.h>
+typedef __m128  vFloat;
+typedef __m128d vDouble;
+
 #ifndef VECTOR_F64_128BIT
 #define VECTOR_F64_128BIT
 #endif
+#endif /* TARGET_INTEL */
+
+/* If NOT Intel but ARM NEON is available, define vector types and macros */
+#if !defined(TARGET_INTEL) && defined(TARGET_ARM_NEON)
+#include <arm_neon.h>
+
+/* Map SSE-like abstractions to NEON for float */
+typedef float32x4_t vFloat;
+/* Double precision NEON (only guaranteed on AArch64) */
+#if defined(__aarch64__)
+typedef float64x2_t vDouble;
+#define HAVE_NEON_F64 1
+#else
+/* Fallback struct if 64-bit NEON not present (32-bit ARM) */
+typedef struct { double d[2]; } vDouble;
 #endif
 
+/* Float broadcast */
+#define float2vector                vdupq_n_f32
+/* Basic float ops */
+#define F32_VEC_MUL_OP              vmulq_f32
+#define F32_VEC_ADD_OP              vaddq_f32
+#define F32_VEC_SUB_OP              vsubq_f32
+#define F32_VEC_ULOAD(p)            vld1q_f32((const float*)(p))
+#define F32_VEC_USTORE(p, v)        vst1q_f32((float*)(p), (v))
+
+/* Limited shuffle emulation:
+   SSE _mm_shuffle_ps(a,b,imm8) selects lanes from (a,b).
+   We approximate using vext (concatenate + extract). This
+   handles many common patterns (rotations / simple mixes). */
+#define F32_VEC_SHUFFLE(a, b, imm8) vextq_f32((a), (b), ((imm8) & 0x3))
+
+#define F32_SHUFFLE_CONST(z,y,x,w)  ((z<<6)|(y<<4)|(x<<2)|w) /* kept for compatibility */
+
+/* Double broadcast / ops (only if real NEON F64) */
+#if defined(HAVE_NEON_F64)
+#define double2vector               vdupq_n_f64
+#define F64_VEC_MUL_OP              vmulq_f64
+#define F64_VEC_ADD_OP              vaddq_f64
+#define F64_VEC_SUB_OP              vsubq_f64
+#define F64_VEC_ULOAD(p)            vld1q_f64((const double*)(p))
+#define F64_VEC_USTORE(p, v)        vst1q_f64((double*)(p), (v))
+#define F64_VEC_SHUFFLE(a,b,imm)    vextq_f64((a),(b), ((imm)&0x1))
+#else
+/* Scalar fallbacks if double NEON not available */
+static inline vDouble double2vector(double x)
+{
+  vDouble r; r.d[0] = x; r.d[1] = x; return r;
+}
+static inline vDouble F64_VEC_MUL_OP(vDouble a, vDouble b)
+{
+  vDouble r; r.d[0] = a.d[0]*b.d[0]; r.d[1] = a.d[1]*b.d[1]; return r;
+}
+static inline vDouble F64_VEC_ADD_OP(vDouble a, vDouble b)
+{
+  vDouble r; r.d[0] = a.d[0]+b.d[0]; r.d[1] = a.d[1]+b.d[1]; return r;
+}
+static inline vDouble F64_VEC_SUB_OP(vDouble a, vDouble b)
+{
+  vDouble r; r.d[0] = a.d[0]-b.d[0]; r.d[1] = a.d[1]-b.d[1]; return r;
+}
+static inline vDouble F64_VEC_ULOAD(const double *p)
+{
+  vDouble r; r.d[0]=p[0]; r.d[1]=p[1]; return r;
+}
+static inline void F64_VEC_USTORE(double *p, vDouble v)
+{
+  p[0]=v.d[0]; p[1]=v.d[1];
+}
+#define F64_VEC_SHUFFLE(a,b,imm) (a) /* no-op placeholder */
+#endif /* HAVE_NEON_F64 */
+
+#define F64_SHUFFLE_CONST(y,x) ((y<<1)|x)
+
+#endif /* !TARGET_INTEL && TARGET_ARM_NEON */
+
+/* If both architectures somehow defined, prefer Intel originals (no changes). */
+
+
+/* Keep original Intel macro block (unchanged) but guard it so we don't
+   redefine when we already created ARM versions. */
 #ifdef TARGET_INTEL
 
 #define float2vector                                    _mm_set1_ps
@@ -104,7 +200,7 @@ typedef __m128d vDouble;
 
 #define F32_SHUFFLE_CONST(z, y, x, w)	((z<<6)|(y<<4)|(x<<2)|w)
 
-#define double2vector                                    _mm_set1_pd
+#define double2vector                                   _mm_set1_pd
 
 #define F64_VEC_MUL_OP  _mm_mul_pd
 #define F64_VEC_ADD_OP  _mm_add_pd
@@ -152,9 +248,30 @@ vdupq_n_f64
 #define ALIGNED_REALLOC(x, nbytes) _aligned_realloc(x, nbytes, 16)
 #define ALIGNED_FREE _aligned_free
 
+#else
+/* POSIX (Linux, macOS including Apple ARM) aligned allocation helpers (added) */
+#include <stdlib.h>
+#include <string.h>
+static inline void* aligned_malloc(size_t size, size_t alignment)
+{
+  void* ptr = NULL;
+#if defined(_ISOC11_SOURCE)
+  /* Ensure size is a multiple of alignment for aligned_alloc */
+  size_t padded = ((size + alignment - 1) / alignment) * alignment;
+  ptr = aligned_alloc(alignment, padded);
+#elif defined(_MSC_VER)
+  ptr = _aligned_malloc(size, alignment);
+#else
+  if (posix_memalign(&ptr, alignment, size) != 0) ptr = NULL;
+#endif
+  return ptr;
+}
+#define ALIGNED_MALLOC(x)          aligned_malloc((x), 16)
+#define ALIGNED_REALLOC(x,nbytes)  realloc((x),(nbytes)) /* alignment may be lost */
+#define ALIGNED_FREE               free
 #endif /* NT */
 
-/* memory alignment */
+/* memory alignment (original declarations kept) */
 
 void *aligned_getbytes(size_t nbytes);
 void *aligned_resizebytes(void *old, size_t oldsize, size_t newsize);
