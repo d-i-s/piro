@@ -1,0 +1,7 @@
+{
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_style": "Visual Studio",
+    "C_Cpp.clang_format_fallbackStyle": "Visual Studio",
+    "editor.formatOnSave": true,
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json",
+}
